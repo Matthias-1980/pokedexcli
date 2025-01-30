@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+	"pokedexcli/internal/pokecache"
 )
 
 func startRepl() {
@@ -12,6 +14,9 @@ func startRepl() {
 	config.prev = ""
 	config.next = "https://pokeapi.co/api/v2/location-area/"
 	conf := &config
+
+	interval := 5 * time.Second
+	cache := pokecache.NewCache(interval)
 
 	reader := bufio.NewScanner(os.Stdin)
 	for {
@@ -27,7 +32,7 @@ func startRepl() {
 
 		command, exists := getCommands()[commandName]
 		if exists {
-			err := command.callback(conf)
+			err := command.callback(conf, cache)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -48,7 +53,7 @@ func cleanInput(text string) []string {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(conf *Config) error
+	callback    func(conf *Config, cache *pokecache.Cache) error
 }
 
 func getCommands() map[string]cliCommand {
